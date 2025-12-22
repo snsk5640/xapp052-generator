@@ -51,7 +51,6 @@ Calculates multiple seeds starting from an initial seed, where each new seed is 
 ```bash
 ./lfsr-generator -m reseed -b 32 -s 0x12345678 -n 5 -k 1000000 -o seeds.txt
 ```
-
 Using these seeds guarantees that the random number sequences will not overlap for at least 1 million steps.
 
 ## Visualization
@@ -64,13 +63,13 @@ python3 ../scripts/visualize.py seeds.txt -o distribution.png
 
 ## Project Structure
 
-src/: C++ source code (Main logic and CLI)
-
-include/: Header files
-
-data/: Tap configuration CSV file
-
-scripts/: Python visualization script
+.
+└── lfsr-generator/
+    ├── data/: C++ source code (Main logic and CLI)
+    ├── include/: Header files
+    ├── scripts/: Tap configuration CSV file
+    └── src/: Python visualization script
 
 ## License
+
 [MIT](LICENSE) © [@snsk5640](https://github.com/snsk5640)
