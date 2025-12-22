@@ -30,23 +30,23 @@ cmake -G "Ninja" ..
 ninja
 ```
 
-#Usage
+# Usage
 
-##Generate Mode (Standard Random Numbers)
+## Generate Mode (Standard Random Numbers)
 
 Generates random numbers starting from a specific seed and saves them to a file.
 
-##Example: Generate 10 numbers using a 16-bit LFSR with seed 0x1234
+## Example: Generate 10 numbers using a 16-bit LFSR with seed 0x1234
 
 ```bash
 ./lfsr-generator -m generate -b 16 -s 0x1234 -n 10 -o output.txt
 ```
 
-#Reseed Mode (Non-Overlapping Seeds)
+## Reseed Mode (Non-Overlapping Seeds)
 
 Calculates multiple seeds starting from an initial seed, where each new seed is separated by a specific step size (--step). This is useful for initializing parallel workers.
 
-##Example: Generate 5 seeds for 32-bit LFSR, each separated by 1,000,000 steps
+## Example: Generate 5 seeds for 32-bit LFSR, each separated by 1,000,000 steps
 
 ```bash
 ./lfsr-generator -m reseed -b 32 -s 0x12345678 -n 5 -k 1000000 -o seeds.txt
@@ -54,7 +54,7 @@ Calculates multiple seeds starting from an initial seed, where each new seed is 
 
 Using these seeds guarantees that the random number sequences will not overlap for at least 1 million steps.
 
-#Visualization
+# Visualization
 
 Visualizes the distribution of the seeds generated in Reseed Mode.
 
@@ -62,7 +62,7 @@ Visualizes the distribution of the seeds generated in Reseed Mode.
 python3 ../scripts/visualize.py seeds.txt -o distribution.png
 ```
 
-#Project Structure
+# Project Structure
 
 src/: C++ source code (Main logic and CLI)
 
