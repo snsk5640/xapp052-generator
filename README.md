@@ -31,7 +31,9 @@ ninja
 ```
 
 #Usage
-##1. Generate Mode (Standard Random Numbers)
+
+##Generate Mode (Standard Random Numbers)
+
 Generates random numbers starting from a specific seed and saves them to a file.
 
 ##Example: Generate 10 numbers using a 16-bit LFSR with seed 0x1234
@@ -40,7 +42,8 @@ Generates random numbers starting from a specific seed and saves them to a file.
 ./lfsr-generator -m generate -b 16 -s 0x1234 -n 10 -o output.txt
 ```
 
-#2. Reseed Mode (Non-Overlapping Seeds)
+#Reseed Mode (Non-Overlapping Seeds)
+
 Calculates multiple seeds starting from an initial seed, where each new seed is separated by a specific step size (--step). This is useful for initializing parallel workers.
 
 ##Example: Generate 5 seeds for 32-bit LFSR, each separated by 1,000,000 steps
@@ -51,7 +54,8 @@ Calculates multiple seeds starting from an initial seed, where each new seed is 
 
 Using these seeds guarantees that the random number sequences will not overlap for at least 1 million steps.
 
-#3. Visualization
+#Visualization
+
 Visualizes the distribution of the seeds generated in Reseed Mode.
 
 ```bash
@@ -59,6 +63,7 @@ python3 ../scripts/visualize.py seeds.txt -o distribution.png
 ```
 
 #Project Structure
+
 src/: C++ source code (Main logic and CLI)
 
 include/: Header files
