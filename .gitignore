@@ -1,16 +1,14 @@
-# ビルドディレクトリ
 build/
 cmake-build-*/
 
-# Pythonの一時ファイル
 __pycache__/
 *.pyc
 
-# IDEやOSの設定ファイル
 .vscode/
 .idea/
 .DS_Store
 
-# 生成された出力ファイル（アップロード不要）
 *.txt
 *.png
+
+!CMakeLists.txt
