@@ -71,6 +71,13 @@ python3 ../scripts/visualize.py seeds.txt -o distribution.png
 └── src/        # C++ source code (Main logic and CLI)
 ```
 
+## Reference
+
+The tap configuration and LFSR implementation details are based on the following documentation:
+
+* **Xilinx XAPP 052**: Efficient Shift Registers, LFSR Counters, and Long Pseudo-Random Sequence Generators
+* [https://docs.amd.com/v/u/en-US/xapp052](https://docs.amd.com/v/u/en-US/xapp052)
+
 ## License
 
 [MIT](LICENSE) © [@snsk5640](https://github.com/snsk5640)
