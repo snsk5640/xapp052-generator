@@ -63,12 +63,13 @@ python3 ../scripts/visualize.py seeds.txt -o distribution.png
 
 ## Project Structure
 
+```text
 .
-└── lfsr-generator/
-    ├── data/: C++ source code (Main logic and CLI)
-    ├── include/: Header files
-    ├── scripts/: Tap configuration CSV file
-    └── src/: Python visualization script
+├── data/       # Tap configuration CSV file
+├── include/    # Header files
+├── scripts/    # Python visualization script
+└── src/        # C++ source code (Main logic and CLI)
+```
 
 ## License
 
