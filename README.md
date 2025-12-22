@@ -1,4 +1,4 @@
-# LFSR Generator & Visualizer
+# XAPP052 Generator
 
 A configurable **Linear Feedback Shift Register (LFSR)** generator tool based on **Xilinx XAPP 052** specifications.
 In addition to standard random number generation, it features a **Reseed Mode** for calculating non-overlapping seeds for parallel simulations, and a Python-based **visualization tool** to verify seed distribution.
