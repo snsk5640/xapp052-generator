@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 
 int runGenerateMode(const LFSRConfig& cfg, uint64_t seed, int count, const std::string& output_file) {
     std::ofstream outfile(output_file);
@@ -16,7 +17,8 @@ int runGenerateMode(const LFSRConfig& cfg, uint64_t seed, int count, const std::
     outfile << "# COUNT=" << count << std::endl;
 
     uint64_t state = seed;
-    uint64_t mask = (1ULL << cfg.bits) - 1;
+    // Handle 64-bit mask correctly to avoid undefined behavior with 1ULL << 64
+    uint64_t mask = (cfg.bits == 64) ? ~0ULL : (1ULL << cfg.bits) - 1;
 
     std::cout << "Mode: GENERATE (" << count << " numbers)" << std::endl;
 
@@ -30,9 +32,31 @@ int runGenerateMode(const LFSRConfig& cfg, uint64_t seed, int count, const std::
 }
 
 int runReseedMode(const LFSRConfig& cfg, uint64_t seed, int count, int step_size, const std::string& output_file) {
-    if (step_size <= 0) {
-        std::cerr << "Error: --step (-k) must be specified > 0 for reseed mode." << std::endl;
-        return 1;
+    
+    uint64_t actual_step = step_size;
+
+    // Auto-calculation logic if step_size is 0
+    if (actual_step == 0) {
+        if (count <= 0) {
+            std::cerr << "Error: Count must be > 0." << std::endl;
+            return 1;
+        }
+
+        uint64_t total_period;
+        if (cfg.bits == 64) {
+            total_period = std::numeric_limits<uint64_t>::max(); // 2^64 - 1
+        } else {
+            total_period = (1ULL << cfg.bits) - 1;
+        }
+
+        actual_step = total_period / count;
+
+        if (actual_step == 0) {
+            std::cerr << "Error: Count is too large for the period range. Cannot distribute." << std::endl;
+            return 1;
+        }
+        
+        std::cout << "Auto-calculated step size: " << actual_step << std::endl;
     }
 
     std::ofstream outfile(output_file);
@@ -45,21 +69,22 @@ int runReseedMode(const LFSRConfig& cfg, uint64_t seed, int count, int step_size
     outfile << "# TYPE=RESEED" << std::endl;
     outfile << "# BITS=" << cfg.bits << std::endl;
     outfile << "# COUNT=" << count << std::endl;
-    outfile << "# STEP=" << step_size << std::endl;
+    outfile << "# STEP=" << actual_step << std::endl;
 
     uint64_t state = seed;
-    uint64_t mask = (1ULL << cfg.bits) - 1;
+    // Handle 64-bit mask correctly
+    uint64_t mask = (cfg.bits == 64) ? ~0ULL : (1ULL << cfg.bits) - 1;
 
     std::cout << "Mode: RESEED" << std::endl;
     std::cout << " Generating " << count << " seeds." << std::endl;
-    std::cout << " Each seed is separated by " << step_size << " steps." << std::endl;
+    std::cout << " Each seed is separated by " << actual_step << " steps." << std::endl;
 
     for (int i = 0; i < count; ++i) {
         // Output the current state as a new start seed
         outfile << "0x" << std::hex << std::setw((cfg.bits + 3) / 4) << std::setfill('0') << state << std::endl;
         
-        // Advance the LFSR by 'step_size'
-        for (int j = 0; j < step_size; ++j) {
+        // Advance the LFSR by 'actual_step'
+        for (uint64_t j = 0; j < actual_step; ++j) {
             state = stepLFSR(state, cfg, mask);
         }
     }

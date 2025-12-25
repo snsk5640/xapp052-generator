@@ -56,9 +56,15 @@ int main(int argc, char* argv[]) {
     // Mode Dispatch
     if (mode == "generate") {
         return runGenerateMode(cfg, seed, count, output_file);
-    } else if (mode == "reseed") {
+    } 
+    else if (mode == "reseed") {
+        // If step_size is 0, notify the user that we will auto-calculate
+        if (step_size == 0) {
+            std::cout << "Step size not specified. Auto-calculating for equal distribution..." << std::endl;
+        }
         return runReseedMode(cfg, seed, count, step_size, output_file);
-    } else {
+    } 
+    else {
         std::cerr << "Error: Unknown mode '" << mode << "'" << std::endl;
         return 1;
     }
