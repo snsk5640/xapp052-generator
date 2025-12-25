@@ -4,6 +4,9 @@ import matplotlib.patches as patches
 import sys
 import os
 
+# --------------------------------------------------
+# File Parsing Function
+# --------------------------------------------------
 def parse_lfsr_file(filepath):
     """
     Parses the LFSR output file to extract metadata and seed values.
@@ -40,61 +43,123 @@ def parse_lfsr_file(filepath):
         
     return metadata, seeds
 
+# --------------------------------------------------
+# Visualization Function (Timeline View)
+# --------------------------------------------------
 def visualize_coverage(metadata, seeds, output_image):
+    """
+    Visualizes the seeds as segments along the LFSR sequence timeline.
+    This assumes the file was generated in 'RESEED' mode where seeds
+    are separated by a fixed 'STEP'.
+    """
     bits = metadata.get("BITS", 32)
     step = metadata.get("STEP", 0)
     mode = metadata.get("TYPE", "UNKNOWN")
+    count = len(seeds)
+
+    # This visualization requires RESEED mode
+    if mode != "RESEED" or step == 0 or count == 0:
+         print("-" * 40)
+         print("Error: This visualization method requires a file generated in 'RESEED' mode")
+         print("       with a valid 'STEP' size defined in the header.")
+         print(f"Current metadata: TYPE={mode}, STEP={step}, Count={count}")
+         print("-" * 40)
+         sys.exit(1)
+
+    # Python handles arbitrary-precision integers, so >64 bits is fine
+    # Calculate total period (2^BITS - 1)
+    max_period = (1 << bits) - 1
     
-    max_val = (1 << bits) - 1
+    print(f"Visualizing {count} seed segments in RESEED mode.")
+    print(f" - Total Period Space: {max_period} steps (2^{bits}-1)")
+    print(f" - Step Size per Segment: {step:,} steps")
     
-    print(f"Visualizing {len(seeds)} segments.")
-    print(f"Range: 0 to {max_val} (2^{bits})")
-    
-    fig, ax = plt.subplots(figsize=(12, 4))
-    
-    # Setup axis
-    ax.set_xlim(0, max_val)
+    # Setup figure (wider aspect ratio)
+    fig, ax = plt.subplots(figsize=(14, 6))
+
+    # ------------------------------
+    # Axis Setup: X-axis = Time (Steps)
+    # ------------------------------
+    # Plot limit is the max of Total Period or Final Position
+    final_pos = count * step
+    plot_limit = max(max_period, final_pos)
+
+    ax.set_xlim(0, plot_limit)
     ax.set_ylim(0, 1)
-    ax.set_yticks([])
-    ax.set_xlabel(f"LFSR Value Space (0 to $2^{{{bits}}}-1$)")
-    ax.set_title(f"LFSR Coverage Map ({mode} Mode)\nBits: {bits}, Step Size: {step}")
+    ax.set_yticks([]) # No Y-axis ticks needed
     
-    # Draw background bar (empty space)
-    ax.add_patch(patches.Rectangle((0, 0.3), max_val, 0.4, color="#f0f0f0", label="Unused Space"))
+    # X-axis label setup
+    prefix = "Initial Seed"
+    ax.set_xlabel(f"LFSR Sequence Timeline (Steps from {prefix})\nTotal Period: $2^{{{bits}}}-1$")
+    ax.set_title(f"LFSR Reseed Coverage Map (Timeline View)\n{bits}-bit LFSR, {count} segments of {step:,} steps each")
+    
+    # Background (Grey bar showing total period space)
+    if max_period <= plot_limit:
+        ax.add_patch(patches.Rectangle((0, 0.25), max_period, 0.5, color="#e0e0e0", zorder=0, label="Total Period Space"))
 
-    # Draw segments
-    # Note: LFSR values jump around pseudo-randomly, but here we visualize 
-    # the "value" coverage if we treat the number as a magnitude.
-    # HOWEVER, for Reseed Visualization, usually we care about the "Sequence Overlap".
-    # Since we can't easily map "value" to "sequence position" without discrete log,
-    # we will visualize the SEEDS as points in the value space.
-    
-    # If we want to show non-overlapping property, we ideally map to time-domain, 
-    # but that requires discrete log calculation which is hard.
-    # Instead, let's visualize the distribution of Start Points in the value space.
-    
-    colors = plt.cm.viridis([i / len(seeds) for i in range(len(seeds))])
-    
-    for i, seed in enumerate(seeds):
-        # Draw a vertical line for the seed start
-        ax.axvline(x=seed, color=colors[i], ymin=0.3, ymax=0.7, linewidth=2, alpha=0.8)
-        
-        # If step is small compared to max_val, it's hard to see the range bar.
-        # But we try to draw a small rectangle representing the "consumed" range 
-        # IF we assume linear mapping (which is not true for LFSR, but shows magnitude).
-        # strictly speaking, LFSR jumps. 
-        # So we just plot the SEED LOCATIONS to show they are distributed.
-        
-    # Create a custom legend
-    ax.text(0, 1.05, f"Total Seeds: {len(seeds)}", transform=ax.transAxes)
+    # ------------------------------
+    # Loop to draw seed segments
+    # ------------------------------
+    # Vary colors to show order (using viridis colormap)
+    cmap = plt.get_cmap('viridis', count)
 
+    for i, seed_val in enumerate(seeds):
+        # Calculate X position: steps from initial seed
+        start_step = i * step
+        
+        # Width of the segment covered by this seed
+        # (We use the STEP size to show equal distribution)
+        rect_width = step
+        
+        color = cmap(i)
+        
+        # 1. Draw the segment as a colored bar
+        # (x, y), width, height
+        rect = patches.Rectangle((start_step, 0.25), rect_width, 0.5, 
+                                 color=color, alpha=0.8, linewidth=0, zorder=1)
+        ax.add_patch(rect)
+        
+        # 2. Draw a divider line at the start
+        ax.axvline(x=start_step, color='black', linestyle='-', linewidth=1, alpha=0.3, ymin=0.2, ymax=0.8, zorder=2)
+        
+        # 3. Draw labels (Only show for first few and last few to avoid clutter)
+        if i < 2 or i >= count - 2:
+            # Format hex string
+            hex_str = f"0x{seed_val:X}"
+            # Alternating vertical positions to prevent overlap
+            y_pos = 0.8 if i % 2 == 0 else 0.15
+            # Draw text
+            ax.text(start_step, y_pos, 
+                    f"#{i+1}\n{hex_str}", 
+                    fontsize=9, rotation=45, ha='left', va='center', zorder=3)
+
+    # ------------------------------
+    # Final touches
+    # ------------------------------
+    # Red line showing end of generated sequence
+    if final_pos > 0:
+        ax.axvline(x=final_pos, color='red', linestyle=':', linewidth=2, zorder=4)
+        ax.text(final_pos, 0.5, " End of Generated Sequence", color='red', ha='left', va='center', fontsize=10, fontweight='bold')
+
+    # Use scientific notation for large X-axis values
+    if plot_limit > 1e5:
+        ax.ticklabel_format(style='sci', axis='x', scilimits=(0,0), useMathText=True)
+
+    # Layout adjustment and save
     plt.tight_layout()
-    plt.savefig(output_image)
+    # Add bottom margin for x-axis labels
+    plt.subplots_adjust(bottom=0.2) 
+    
+    plt.savefig(output_image, dpi=150)
     print(f"Saved visualization to {output_image}")
 
+
+# --------------------------------------------------
+# Main Execution
+# --------------------------------------------------
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Visualize LFSR Seed Distribution")
-    parser.add_argument("input_file", help="Path to the LFSR output file (txt)")
+    parser = argparse.ArgumentParser(description="Visualize LFSR Seed Distribution (Timeline View)")
+    parser.add_argument("input_file", help="Path to the LFSR output file (txt) from Reseed mode")
     parser.add_argument("-o", "--output", default="coverage_map.png", help="Output image file path")
     
     args = parser.parse_args()

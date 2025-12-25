@@ -79,14 +79,21 @@ int runReseedMode(const LFSRConfig& cfg, uint64_t seed, int count, int step_size
     std::cout << " Generating " << count << " seeds." << std::endl;
     std::cout << " Each seed is separated by " << actual_step << " steps." << std::endl;
 
-    for (int i = 0; i < count; ++i) {
+for (int i = 0; i < count; ++i) {
         // Output the current state as a new start seed
         outfile << "0x" << std::hex << std::setw((cfg.bits + 3) / 4) << std::setfill('0') << state << std::endl;
         
+        std::cout << "Calculating seed " << (i + 1) << "/" << (count) << " ... " << std::flush;
+
         // Advance the LFSR by 'actual_step'
         for (uint64_t j = 0; j < actual_step; ++j) {
             state = stepLFSR(state, cfg, mask);
+
+            if (actual_step > 100000 && j % (actual_step / 10) == 0) {
+                std::cout << "." << std::flush;
+            }
         }
+        std::cout << " Done!" << std::endl;
     }
 
     std::cout << "Done. Output saved to " << output_file << std::endl;
